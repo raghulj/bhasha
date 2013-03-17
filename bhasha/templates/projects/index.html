@@ -1,0 +1,8 @@
+{% if projects %}
+
+	<ul>
+	{% for project in projects %}
+		<li> <a href="/projects/{{project.id }}/catalogue">{{project.title }}</a> </li>
+	{% endfor %}
+</ul>
+{% endif %}

@@ -1,0 +1,23 @@
+		<!-- Upload form. Note enctype attribute! -->
+		<form action="/projects/{{ project.id }}/languages/1/translations/" method="post" enctype="multipart/form-data">
+			{% csrf_token %}
+			<p>{{ form.non_field_errors }}</p>
+			<p>{{ form.docfile.label_tag }} {{ form.docfile.help_text }}</p>
+			<p>
+				{{ form.docfile.errors }}
+				{{ form.docfile }}
+			</p>
+			<p><input type="submit" value="Upload" /></p>
+		</form>
+
+
+Total input strings are {{ catalogue|length }}
+
+{% if languages %}
+
+	<ul>
+		{% for language in languages %}
+			<li> <a href="/projects/{{project.id }}/languages/{{language.id }}/translations/">{{language.description}}</a> </li>
+		{% endfor %}
+	</ul>
+{% endif %}
