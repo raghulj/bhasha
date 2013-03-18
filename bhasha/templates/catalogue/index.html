@@ -1,15 +1,13 @@
-		<!-- Upload form. Note enctype attribute! -->
-		<form action="/projects/{{ project.id }}/languages/1/translations/" method="post" enctype="multipart/form-data">
-			{% csrf_token %}
-			<p>{{ form.non_field_errors }}</p>
-			<p>{{ form.docfile.label_tag }} {{ form.docfile.help_text }}</p>
-			<p>
-				{{ form.docfile.errors }}
-				{{ form.docfile }}
-			</p>
-			<p><input type="submit" value="Upload" /></p>
-		</form>
+{% extends 'base.html' %}
 
+
+{% block content %}
+
+
+		
+
+<a href="#FileUploadModal" role="button" class="btn" data-toggle="modal">Upload a file</a>
+<br>
 
 Total input strings are {{ catalogue|length }}
 
@@ -21,3 +19,54 @@ Total input strings are {{ catalogue|length }}
 		{% endfor %}
 	</ul>
 {% endif %}
+
+
+
+
+
+
+<!-- Modal -->
+<div id="FileUploadModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<form action="/projects/{{ project.id }}/languages/1/translations/" method="post" enctype="multipart/form-data">
+		  <div class="modal-header">
+		    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+		    <h3 id="myModalLabel">File upload</h3>
+		  </div>
+		  <div class="modal-body">
+		  		<p> Please select the type of file </p>
+
+					{% csrf_token %}
+					<select id="platform" name="platform">
+					  <option value="android">Android (strings.xml file)</option>
+					  <option value="ios">iOS (Localizable.strings file)</option>
+					</select>
+				<p> Select the Language of the file </p>
+					<select id="language" name="language" >
+						{% for language in languages %}
+						  <option value="{{ language.id }}">{{ language.description }}</option>
+					  	{% endfor %}
+					</select>
+
+
+					<p>{{ form.non_field_errors }}</p>
+					<p>{{ form.docfile.label_tag }} {{ form.docfile.help_text }}</p>
+					<p>
+						{{ form.docfile.errors }}
+						{{ form.docfile }}
+					</p>
+
+		  </div>
+		  <div class="modal-footer">
+		    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+		    <button class="btn btn-primary">Upload</button>
+		  </div>
+    </form>
+
+
+</div>
+
+
+
+
+
+{% endblock %}

@@ -154,3 +154,10 @@ LOGGING = {
         },
     }
 }
+
+
+# development environment settings file
+try:
+    from local_settings import *
+except:
+    pass

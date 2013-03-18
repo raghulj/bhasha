@@ -45,6 +45,7 @@ def translations(request,project_id, language_id):
 	project = Project.objects.get(id=project_id)
 	language = Language.objects.get(id=language_id)
 	if request.method == 'POST':
+
 		form = DocumentForm(request.POST, request.FILES)
 		if form.is_valid():
 			input_file = request.FILES['docfile']
@@ -63,7 +64,7 @@ def translations(request,project_id, language_id):
 					catalogue.description = value
 					catalogue.save()
 
-			init_language(project)
+			init_language(project,request.POST['language'], request.POST['platform'])
 
 
 		return render_to_response('translations/index.html', {'project': project, 'language': language, 'form': form}, context_instance=ctx )
@@ -74,20 +75,24 @@ def translations(request,project_id, language_id):
 
 
 @async
-def init_language(project):
-
+def init_language(project, uploaded_language_id, platform):
 	catalogues = Catalogue.objects.filter(project=project)
 	languages = Language.objects.filter(project=project)
+
 	for catalogue in catalogues:
 		for language in languages:
 			translation = Translation.objects.filter(catalogue=catalogue).filter(language=language)
+
 			if translation.count() == 0:
-				print "creating new value for "+catalogue.msg_key
 				translation = Translation()
 				translation.language = language
 				translation.catalogue = catalogue
 				translation.project = project
-				translation.msg_string = ""
+
+				if str(language.id) == uploaded_language_id:
+					translation.msg_string = catalogue.description
+				else:
+					translation.msg_string = ""
 				translation.save()
 
 def catalogue(request,project_id):
