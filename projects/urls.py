@@ -8,6 +8,8 @@ urlpatterns = patterns('projects.views',
 
             url(r'^(?P<project_id>\d+)/languages/(?P<language_id>\d+)/translations/$','translations'),
             url(r'^(?P<project_id>\d+)/translations/(?P<language_id>\d+)/$','update_translations'),
+            url(r'^(?P<project_id>\d+)/languages/(?P<language_id>\d+)/download/$','download_translation'),
+
             # url(r'^create/$','create'),
             # url(r'^socialinfo/create/(?P<eid>\d+)/$','create_socialinfo'),
             # url(r'^socialinfo/edit/(?P<eid>\d+)/$','edit_socialinfo'),

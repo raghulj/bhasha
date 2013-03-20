@@ -12,6 +12,7 @@ from django.utils.datastructures import SortedDict
 from django.views.decorators.cache import cache_control
 
 from tokenapi.http import JsonResponse, JsonError
+from django.core.servers.basehttp import FileWrapper
 
 
 from projects.models import Project
@@ -25,6 +26,10 @@ import uuid
 
 from forms import DocumentForm
 from djutils.decorators import async
+import xml.etree.ElementTree as ET
+import cStringIO as StringIO
+import os, tempfile, zipfile
+
 
 
 
@@ -49,51 +54,83 @@ def translations(request,project_id, language_id):
 		form = DocumentForm(request.POST, request.FILES)
 		if form.is_valid():
 			input_file = request.FILES['docfile']
-			lines = input_file.readlines()
-			for line in lines:
-				key, value = get_strings(line)
-				if key:
-					catalogue = Catalogue.objects.filter(msg_key=key)
-					if catalogue.count() == 0:
-						catalogue = Catalogue()
-					else:
-						catalogue = catalogue[0]
-
-					catalogue.project =project
-					catalogue.msg_key = key
-					catalogue.description = value
-					catalogue.save()
-
-			init_language(project,request.POST['language'], request.POST['platform'])
-
+			persist_uploaded_file(project, request.POST['language'], request.POST['platform'], input_file)
 
 		return render_to_response('translations/index.html', {'project': project, 'language': language, 'form': form}, context_instance=ctx )
 	else:
 		form = DocumentForm()
-		print language.id
 		return render_to_response('translations/index.html', {'project': project, 'language': language, 'form': form}, context_instance=ctx )
 
+
+## based on the type of file extract the key and values to the respective database file
+def persist_uploaded_file(project, uploaded_language_id, platform, doc_data):
+	if platform == "android":
+		doc_data = doc_data.read()
+		doc_data = doc_data.decode('utf-8').encode('ascii', 'xmlcharrefreplace')
+		parse_android_xml(doc_data, project)
+	else:
+		lines = doc_data.readlines()
+		for line in lines:
+			key, value = get_strings(line)
+			if key:
+				persist(key,value, project)
+
+	## initialize or update the respective table with empty or new values
+	init_language(project,uploaded_language_id, platform)
+
+
+## update the catalogue with the last file uploaded
+def persist(key, value, project):
+	catalogue = Catalogue.objects.filter(msg_key=key)
+	if catalogue.count() == 0:
+		catalogue = Catalogue()
+	else:
+		catalogue = catalogue[0]
+
+	catalogue.project =project
+	catalogue.msg_key = key
+	catalogue.description = value
+	catalogue.save()
+
+## Parse android strings.xml file and persist the keys and values in database
+def parse_android_xml(doc_data, project):
+	resources = ET.fromstring(doc_data)
+
+	for string in resources:
+		key = string.attrib["name"]
+		value = string.text
+		if key:
+			if value == None:
+				value = ""
+			persist(key, value, project)
 
 @async
 def init_language(project, uploaded_language_id, platform):
 	catalogues = Catalogue.objects.filter(project=project)
 	languages = Language.objects.filter(project=project)
-
 	for catalogue in catalogues:
 		for language in languages:
 			translation = Translation.objects.filter(catalogue=catalogue).filter(language=language)
 
 			if translation.count() == 0:
 				translation = Translation()
-				translation.language = language
-				translation.catalogue = catalogue
-				translation.project = project
+			else:
+				translation = translation[0]
 
-				if str(language.id) == uploaded_language_id:
-					translation.msg_string = catalogue.description
-				else:
+			translation.language = language
+			translation.catalogue = catalogue
+			translation.project = project
+
+			if str(language.id) == uploaded_language_id:
+				translation.msg_string = catalogue.description
+			else:
+				if translation.msg_string == "":
 					translation.msg_string = ""
-				translation.save()
+				else:
+					translation.msg_string = translation.msg_string
+
+			translation.save()
+
 
 def catalogue(request,project_id):
 	ctx = RequestContext(request, {})
@@ -130,7 +167,37 @@ def update_translations(request, project_id, language_id):
 	data = {'project':project.id, "msg":translate.get_data()}
 	return JsonResponse(data)
 
+def download_translation(request, project_id, language_id):
+	platform = request.GET["platform"]
+	project = Project.objects.filter(id=project_id)
+	language = Language.objects.filter(id=language_id)
+	translations = Translation.objects.filter(project=project).filter(language=language)
 
+	if platform == "android":
+		strings = generate_android_strings_xml(translations)
+	else:
+		strings =  "empty"
+
+	temp = file("/tmp/strings.xml", "w")
+	temp.write(strings.encode('utf-8'))
+	temp.close()
+	filename = "/tmp/strings.xml" # Select your file here.                                
+	wrapper = FileWrapper(file(filename))
+	response = HttpResponse(wrapper, content_type='application/force-download')
+	response['Content-Disposition'] = 'attachment; filename=strings.xml'
+	response['Content-Length'] = os.path.getsize(filename)
+	return response
+
+
+
+def generate_android_strings_xml(translations_list):
+	xml_strings = '<?xml version="1.0" encoding="utf-8"?>\n'
+	xml_strings += "<resources>\n"
+	for translation in translations_list:
+		value = translation.msg_string.replace("&", "&amp;")
+		xml_strings += '\t<string name="'+ translation.catalogue.msg_key +'">'+ value +'</string>\n'
+	xml_strings += "</resources>"
+	return xml_strings
 
 
 ## apple.strings
