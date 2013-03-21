@@ -73,6 +73,7 @@ def persist_uploaded_file(project, uploaded_language_id, platform, doc_data):
         lines = doc_data.readlines()
         for line in lines:
             key, value = get_strings(line)
+            print key
             if key:
                 persist(key, value, project)
 
@@ -82,15 +83,20 @@ def persist_uploaded_file(project, uploaded_language_id, platform, doc_data):
 
 ## update the catalogue with the last file uploaded
 def persist(key, value, project):
-    catalogue = Catalogue.objects.filter(msg_key=key)
-    if catalogue.count() == 0:
+
+    try:
+        catalogue = Catalogue.objects.get(msg_key=key)
+    except Catalogue.DoesNotExist:
+        print  "New value " + value
         catalogue = Catalogue()
-    else:
-        catalogue = catalogue[0]
 
     catalogue.project = project
     catalogue.msg_key = key
-    catalogue.description = value
+    if value:
+        catalogue.description = value
+    else:
+        catalogue.description = ""
+
     catalogue.save()
     return catalogue
 
@@ -103,30 +109,30 @@ def parse_android_xml(doc_data, project):
     for string in resources:
         key = string.attrib["name"]
         value = string.text
+        print key
         if key:
             if value == None:
                 value = ""
             persist(key, value, project)
 
 
-@async
+#@async
 def init_language(project, uploaded_language_id, platform):
     catalogues = Catalogue.objects.filter(project=project)
     languages = Language.objects.filter(project=project)
     for catalogue in catalogues:
         for language in languages:
-            translation = Translation.objects.filter(catalogue=catalogue).filter(language=language)
-
-            if translation.count() == 0:
+            try:
+                translation = Translation.objects.filter(catalogue=catalogue).get(language=language)
+            except Translation.DoesNotExist:
                 translation = Translation()
-            else:
-                translation = translation[0]
 
             translation.language = language
             translation.catalogue = catalogue
             translation.project = project
 
             if str(language.id) == uploaded_language_id:
+                print translation.msg_string + " -- " + catalogue.description
                 translation.msg_string = catalogue.description
             else:
                 if translation.msg_string == "":
