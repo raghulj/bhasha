@@ -57,8 +57,15 @@ class Language(models.Model):
     language_id = models.CharField(max_length=20, blank=False)
     description = models.CharField(max_length=50, blank=True)
 
+    def calculatePercentage(self):
+        tot = self.translation_set.count()
+        per = float(tot - self.translation_set.filter(msg_string="").count()) / float(tot) * 100
+        return int(per)
+
     def __unicode__(self):
         return u'%s' % (self.description)
+
+    percent_complete = property(calculatePercentage)
 
     class Meta:
         db_table = "languages"

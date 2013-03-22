@@ -16,14 +16,19 @@ Total input strings are {{ catalogue|length }}
 
 {% if languages %}
 
-	<ul>
 		{% for language in languages %}
-			<li> 
-				<a href="/projects/{{project.id }}/languages/{{language.id }}/translations/">{{language.description}}</a> 
-				<a href="/projects/{{project.id }}/languages/{{language.id }}/download/?platform=android">strings.xml</a> 
-			</li>
+			<div class="well well-small">
+				<h3> <a href="/projects/{{project.id }}/languages/{{language.id }}/translations/">{{language.description}}</a> </h3>
+
+				<div class="progress">
+				  <div class="bar" style="width: {{ language.percent_complete }}%;"></div>
+				</div>
+
+				<br><br><br>
+				<p> <a href="/projects/{{project.id }}/languages/{{language.id }}/download/?platform=android">strings.xml</a>  </p>
+			</div>
+			
 		{% endfor %}
-	</ul>
 {% endif %}
 
 
