@@ -50,25 +50,27 @@ def translations(request, project_id, language_id):
     ctx = RequestContext(request, {})
     project = Project.objects.get(id=project_id)
     language = Language.objects.get(id=language_id)
+    total_languages = Language.objects.filter(project=project)
     if request.method == 'POST':
+        selected_language = Language.objects.get(id=request.POST['language'])
 
         form = DocumentForm(request.POST, request.FILES)
         if form.is_valid():
             input_file = request.FILES['docfile']
-            persist_uploaded_file(project, request.POST['language'], request.POST['platform'], input_file)
+            persist_uploaded_file(project, selected_language, request.POST['platform'], input_file)
 
         return render_to_response('translations/index.html', {'project': project, 'language': language, 'form': form}, context_instance=ctx)
     else:
         form = DocumentForm()
-        return render_to_response('translations/index.html', {'project': project, 'language': language, 'form': form}, context_instance=ctx)
+        return render_to_response('translations/index.html', {'project': project, 'language': language, "languages": total_languages, 'form': form}, context_instance=ctx)
 
 
 ## based on the type of file extract the key and values to the respective database file
-def persist_uploaded_file(project, uploaded_language_id, platform, doc_data):
+def persist_uploaded_file(project, selected_language, platform, doc_data):
     if platform == "android":
         doc_data = doc_data.read()
         doc_data = doc_data.decode('utf-8').encode('ascii', 'xmlcharrefreplace')
-        parse_android_xml(doc_data, project)
+        parse_android_xml(doc_data, project, selected_language)
     else:
         lines = doc_data.readlines()
         for line in lines:
@@ -78,11 +80,11 @@ def persist_uploaded_file(project, uploaded_language_id, platform, doc_data):
                 persist(key, value, project)
 
     ## initialize or update the respective table with empty or new values
-    init_language(project, uploaded_language_id, platform)
+    init_language(project, selected_language, platform)
 
 
 ## update the catalogue with the last file uploaded
-def persist(key, value, project):
+def persist(key, value, project, selected_language):
 
     try:
         catalogue = Catalogue.objects.get(msg_key=key)
@@ -92,6 +94,11 @@ def persist(key, value, project):
 
     catalogue.project = project
     catalogue.msg_key = key
+    value = value.strip()
+
+    if selected_language.language_id == "en":
+        catalogue.comment = value
+
     if value:
         catalogue.description = value
     else:
@@ -100,10 +107,9 @@ def persist(key, value, project):
     catalogue.save()
     return catalogue
 
+
 ## Parse android strings.xml file and persist the keys and values in database
-
-
-def parse_android_xml(doc_data, project):
+def parse_android_xml(doc_data, project, selected_language):
     resources = ET.fromstring(doc_data)
 
     for string in resources:
@@ -113,11 +119,11 @@ def parse_android_xml(doc_data, project):
         if key:
             if value == None:
                 value = ""
-            persist(key, value, project)
+            persist(key, value, project, selected_language)
 
 
 #@async
-def init_language(project, uploaded_language_id, platform):
+def init_language(project, selected_language, platform):
     catalogues = Catalogue.objects.filter(project=project)
     languages = Language.objects.filter(project=project)
     for catalogue in catalogues:
@@ -131,12 +137,15 @@ def init_language(project, uploaded_language_id, platform):
             translation.catalogue = catalogue
             translation.project = project
 
-            if str(language.id) == uploaded_language_id:
+            if language.id == selected_language.id:
                 print translation.msg_string + " -- " + catalogue.description
                 translation.msg_string = catalogue.description
             else:
                 if translation.msg_string == "":
-                    translation.msg_string = ""
+                    if catalogue.comment:
+                        translation.msg_string = catalogue.comment
+                    else:
+                        translation.msg_string = ""
                 else:
                     translation.msg_string = translation.msg_string
 
@@ -185,11 +194,11 @@ def create_catalogue(request, project_id):
     project = Project.objects.get(id=project_id)
     languages = Language.objects.filter(project=project)
 
-    language_id = request.POST['language_id']
+    selected_language = Language.objects.get(id=request.POST['language_id'])
     msg_key = request.POST['msg_key']
     msg_string = request.POST['msg_string']
 
-    catalogue = persist(msg_key, msg_string, project)
+    catalogue = persist(msg_key, msg_string, project, selected_language)
 
     if catalogue:
         for language in languages:
