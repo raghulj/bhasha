@@ -3,6 +3,15 @@
 
 {% block content %}
 
+<h1> Projects 
+<a href="#ProjectCreateModal" role="button" class="btn btn-primary pull-right" data-toggle="modal">Create Project</a>
+</h1>
+
+<hr>
+
+
+
+
 {% if projects %}
 
 	<ul>
@@ -12,6 +21,39 @@
 </ul>
 {% endif %}
 
+
+
+
+
+
+<div id="ProjectCreateModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="projectcreatelabel" aria-hidden="true">
+<!-- 	<form action="/projects/create/" method="post" enctype="multipart/form-data">
+ -->		  <div class="modal-header">
+		    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+		    <h3 id="projectcreatelabel">Create a project</h3>
+		  </div>
+		  <div class="modal-body">
+					{% csrf_token %}
+					<div class="control-group">
+						<label class="control-label" for="inputMsgTitle">Title</label>
+						<div class="controls">
+							<input type="text" name="title" id="inputMsgTitle" value="" >
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="description">Description</label>
+						<div class="controls">
+							<input type="text" name="description" id="inputMsgDescription" value="" >
+						</div>
+					</div>
+	
+		  </div>
+		  <div class="modal-footer">
+		    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+		    <button class="btn btn-primary" onclick="create_event()">create</button>
+		  </div>
+<!--     </form>
+ --></div>
 
 
 {% endblock %}

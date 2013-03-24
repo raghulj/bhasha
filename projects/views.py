@@ -32,11 +32,66 @@ import os
 import tempfile
 import zipfile
 
+from django.views.decorators.csrf import csrf_exempt
+
+
 
 def home(request):
     ctx = RequestContext(request, {})
     projects = Project.objects.all()
     return render_to_response("projects/index.html", {'projects': projects}, context_instance=ctx)
+
+def create_project(request):
+	if request.method == 'POST':
+		title = request.POST["title"]
+		description = request.POST["description"]
+
+		if title:
+			try:
+				project = Project.objects.get(title=title)
+				data = {'status': "error", "message": "project already exist"}
+				return JsonResponse(data)
+			except Project.DoesNotExist:
+				project = Project(title=title, detail=description)
+				project.save()
+
+				language = Language()
+				language.language_id = "en"
+				language.project = project
+				language.description = "English"
+				language.save()
+				data = {'status': "success", "message": "successfully created project", "project": project.get_data()}
+				return HttpResponse(json.dumps(data), content_type="application/json")
+		else:
+			data = {'status': "error", "message": "Please enter the title"}
+			return HttpResponse(json.dumps(data), content_type="application/json")
+	else:
+		data = {'status': "error", "message": "It is not a POST request"}
+		return HttpResponse(json.dumps(data), content_type="application/json")
+
+
+def create_language(request, project_id):
+	if request.method == "POST":
+		project = Project.objects.get(id=project_id)
+		language_id = request.POST["language_id"]
+		language_name = request.POST["language_name"]
+		language = Language()
+		language.language_id = language_id
+		language.description = language_name
+		language.project = project
+		language.save()
+
+		catalogues = Catalogue.objects.filter(project=project)
+		for catalogue in catalogues:
+			translation = Translation()
+			translation.language = language
+			translation.catalogue = catalogue
+			translation.project = project
+			translation.save()
+
+		return HttpResponseRedirect("/projects/"+project_id+"/catalogue/")
+
+
 
 
 def list_languages(request, project_id):

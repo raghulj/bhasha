@@ -1,15 +1,18 @@
 from django.conf.urls.defaults import patterns, url
 
 urlpatterns = patterns('projects.views',
-                       url(r'^$', 'home'),
-                       url(r'^(?P<project_id>\d+)/languages/$', 'list_languages'),
-                       url(r'^(?P<project_id>\d+)/catalogue/$', 'catalogue'),
-                       url(r'^(?P<project_id>\d+)/translations/(?P<language_id>\d+)/list/$', 'list_catalogue'),
+                        url(r'^$', 'home'),
+                        url(r'^(?P<project_id>\d+)/languages/$', 'list_languages'),
+                        url(r'^(?P<project_id>\d+)/languages/create$', 'create_language'),
+                        url(r'^(?P<project_id>\d+)/catalogue/$', 'catalogue'),
+                        url(r'^(?P<project_id>\d+)/translations/(?P<language_id>\d+)/list/$', 'list_catalogue'),
 
-                       url(r'^(?P<project_id>\d+)/languages/(?P<language_id>\d+)/translations/$', 'translations'),
-                       url(r'^(?P<project_id>\d+)/translations/(?P<language_id>\d+)/$', 'update_translations'),
-                       url(r'^(?P<project_id>\d+)/languages/(?P<language_id>\d+)/download/$', 'download_translation'),
-                       url(r'^(?P<project_id>\d+)/create/$', 'create_catalogue'),
+                        url(r'^(?P<project_id>\d+)/languages/(?P<language_id>\d+)/translations/$', 'translations'),
+                        url(r'^(?P<project_id>\d+)/translations/(?P<language_id>\d+)/$', 'update_translations'),
+                        url(r'^(?P<project_id>\d+)/languages/(?P<language_id>\d+)/download/$', 'download_translation'),
+                        url(r'^(?P<project_id>\d+)/create/$', 'create_catalogue'),
+                        url(r'^create/$', 'create_project'),
+
 
                        # url(r'^create/$','create'),
                        # url(r'^socialinfo/create/(?P<eid>\d+)/$','create_socialinfo'),

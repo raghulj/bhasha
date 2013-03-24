@@ -59,8 +59,11 @@ class Language(models.Model):
 
     def calculatePercentage(self):
         tot = self.translation_set.count()
-        per = float(tot - self.translation_set.filter(msg_string="").count()) / float(tot) * 100
-        return int(per)
+        if tot != 0:
+            per = float(tot - self.translation_set.filter(msg_string="").count()) / float(tot) * 100
+            return int(per)
+        else:
+            return 0;
 
     def __unicode__(self):
         return u'%s' % (self.description)

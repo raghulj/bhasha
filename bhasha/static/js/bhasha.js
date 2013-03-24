@@ -26,3 +26,25 @@ $.ajaxSetup({
 });
 
 
+function create_event() {
+    var title = $("#inputMsgTitle").val();
+    var description = $("#inputMsgDescription").val();
+    $.ajax({
+        type: "POST",
+        url:'/projects/create/',
+        data:{ "title": title, "description": description},
+        datatype: "json",
+        success: function(data){
+            if (data.status == "success") { // script returned error
+                alert(data.message);
+                location.reload();
+            } 
+            else {    
+                alert(data.message);
+            }
+        },
+        error: function(XMLHttpRequest, textStatus, errorThrown){
+        // alert(errorThrown);
+        }
+    });
+}
