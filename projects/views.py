@@ -35,63 +35,68 @@ import zipfile
 from django.views.decorators.csrf import csrf_exempt
 
 
-
 def home(request):
     ctx = RequestContext(request, {})
     projects = Project.objects.all()
     return render_to_response("projects/index.html", {'projects': projects}, context_instance=ctx)
 
+
 def create_project(request):
-	if request.method == 'POST':
-		title = request.POST["title"]
-		description = request.POST["description"]
+    if request.method == 'POST':
+        if request.POST["title"]:
+            title = request.POST["title"]
+            description = request.POST["description"]
 
-		if title:
-			try:
-				project = Project.objects.get(title=title)
-				data = {'status': "error", "message": "project already exist"}
-				return JsonResponse(data)
-			except Project.DoesNotExist:
-				project = Project(title=title, detail=description)
-				project.save()
+            if title:
+                try:
+                    project = Project.objects.get(title=title)
+                    data = {'status': "error", "message": "project already exist"}
+                    return JsonResponse(data)
+                except Project.DoesNotExist:
+                    project = Project(title=title, detail=description)
+                    project.save()
 
-				language = Language()
-				language.language_id = "en"
-				language.project = project
-				language.description = "English"
-				language.save()
-				data = {'status': "success", "message": "successfully created project", "project": project.get_data()}
-				return HttpResponse(json.dumps(data), content_type="application/json")
-		else:
-			data = {'status': "error", "message": "Please enter the title"}
-			return HttpResponse(json.dumps(data), content_type="application/json")
-	else:
-		data = {'status': "error", "message": "It is not a POST request"}
-		return HttpResponse(json.dumps(data), content_type="application/json")
+                    language = Language()
+                    language.language_id = "en"
+                    language.project = project
+                    language.description = "English"
+                    language.save()
+                    data = {'status': "success", "message": "successfully created project", "project": project.get_data()}
+                    return HttpResponseRedirect("/projects/" + str(project.id) + "/catalogue/")
+            else:
+                data = {'status': "error", "message": "Please enter the title"}
+                return HttpResponse(json.dumps(data), content_type="application/json")
+        else:
+            return HttpResponseRedirect("/projects/")
+
+    else:
+        data = {'status': "error", "message": "It is not a POST request"}
+        return HttpResponse(json.dumps(data), content_type="application/json")
 
 
 def create_language(request, project_id):
-	if request.method == "POST":
-		project = Project.objects.get(id=project_id)
-		language_id = request.POST["language_id"]
-		language_name = request.POST["language_name"]
-		language = Language()
-		language.language_id = language_id
-		language.description = language_name
-		language.project = project
-		language.save()
+    if request.method == "POST":
+        if request.POST["language_id"]:
+            project = Project.objects.get(id=project_id)
+            language_id = request.POST["language_id"]
+            language_name = request.POST["language_name"]
+            language = Language()
+            language.language_id = language_id
+            language.description = language_name
+            language.project = project
+            language.save()
 
-		catalogues = Catalogue.objects.filter(project=project)
-		for catalogue in catalogues:
-			translation = Translation()
-			translation.language = language
-			translation.catalogue = catalogue
-			translation.project = project
-			translation.save()
+            catalogues = Catalogue.objects.filter(project=project)
+            for catalogue in catalogues:
+                translation = Translation()
+                translation.language = language
+                translation.catalogue = catalogue
+                translation.project = project
+                translation.save()
 
-		return HttpResponseRedirect("/projects/"+project_id+"/catalogue/")
-
-
+            return HttpResponseRedirect("/projects/" + project_id + "/catalogue/")
+        else:
+            return HttpResponseRedirect("/projects/" + project_id + "/catalogue/")
 
 
 def list_languages(request, project_id):
@@ -247,42 +252,45 @@ def update_translations(request, project_id, language_id):
 
 def create_catalogue(request, project_id):
     project = Project.objects.get(id=project_id)
-    languages = Language.objects.filter(project=project)
+    if request.POST['msg_key']:
+        languages = Language.objects.filter(project=project)
 
-    selected_language = Language.objects.get(id=request.POST['language_id'])
-    msg_key = request.POST['msg_key']
-    msg_string = request.POST['msg_string']
+        selected_language = Language.objects.get(id=request.POST['language_id'])
+        msg_key = request.POST['msg_key']
+        msg_string = request.POST['msg_string']
 
-    catalogue = persist(msg_key, msg_string, project, selected_language)
+        catalogue = persist(msg_key, msg_string, project, selected_language)
 
-    if catalogue:
-        for language in languages:
-            translation = Translation.objects.filter(catalogue=catalogue).filter(language=language)
+        if catalogue:
+            for language in languages:
+                translation = Translation.objects.filter(catalogue=catalogue).filter(language=language)
 
-            if translation.count() == 0:
-                translation = Translation()
-            else:
-                translation = translation[0]
-
-            translation.language = language
-            translation.catalogue = catalogue
-            translation.project = project
-
-            if str(language.id) == language_id:
-                translation.msg_string = catalogue.description
-            else:
-                if translation.msg_string == "":
-                    translation.msg_string = ""
+                if translation.count() == 0:
+                    translation = Translation()
                 else:
-                    translation.msg_string = translation.msg_string
+                    translation = translation[0]
 
-            translation.save()
+                translation.language = language
+                translation.catalogue = catalogue
+                translation.project = project
 
-        data = {'success': "ok", "catalogue": catalogue.get_data()}
-        return JsonResponse(data)
+                if str(language.id) == selected_language.id:
+                    translation.msg_string = catalogue.description
+                else:
+                    if translation.msg_string == "":
+                        translation.msg_string = ""
+                    else:
+                        translation.msg_string = translation.msg_string
+
+                translation.save()
+
+            data = {'success': "ok", "catalogue": catalogue.get_data()}
+            return HttpResponseRedirect("/projects/" + str(project.id) + "/catalogue/")
+        else:
+            data = {'success': "fail", "msg": "Error in saving catalogue"}
+            return HttpResponseRedirect("/projects/" + str(project.id) + "/catalogue/")
     else:
-        data = {'success': "fail", "msg": "Error in saving catalogue"}
-        return JsonResponse(data)
+        return HttpResponseRedirect("/projects/" + str(project.id) + "/catalogue/")
 
 
 def download_translation(request, project_id, language_id):
