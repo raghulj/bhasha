@@ -135,7 +135,6 @@ def persist_uploaded_file(project, selected_language, platform, doc_data):
         lines = doc_data.readlines()
         for line in lines:
             key, value = get_strings(line)
-            print key
             if key:
                 persist(key, value, project)
 
@@ -149,7 +148,6 @@ def persist(key, value, project, selected_language):
     try:
         catalogue = Catalogue.objects.get(msg_key=key)
     except Catalogue.DoesNotExist:
-        print  "New value " + value
         catalogue = Catalogue()
 
     catalogue.project = project
@@ -175,7 +173,6 @@ def parse_android_xml(doc_data, project, selected_language):
     for string in resources:
         key = string.attrib["name"]
         value = string.text
-        print key
         if key:
             if value == None:
                 value = ""
@@ -198,7 +195,6 @@ def init_language(project, selected_language, platform):
             translation.project = project
 
             if language.id == selected_language.id:
-                print translation.msg_string + " -- " + catalogue.description
                 translation.msg_string = catalogue.description
             else:
                 if translation.msg_string == "":
