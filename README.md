@@ -17,10 +17,10 @@ To activate the virtual environment,
 
 `pip install -r bhasha/requirements.txt`
 
-All our package dependencies are installed. To create a database, configure it in `settings.py` file.
+All our package dependencies are installed. To create a database, configure it in `local_settings.py` file. A sample `local_settings_sample.py` is added in `bhasha/bhasha` folder. Copy and rename the file to `local_settings.py` file. Change to your configuration.
 
 `python manage.py syncdb` 
 
-Yup, We have our database. Start the server. 
+Yup, We have our database. The default username and password for the admin is added. Start the server. 
 
 [virtual env site]: https://pypi.python.org/pypi/virtualenv
