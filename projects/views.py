@@ -289,6 +289,7 @@ def create_catalogue(request, project_id):
         return HttpResponseRedirect("/projects/" + str(project.id) + "/catalogue/")
 
 
+@csrf_exempt
 def download_translation(request, project_id, language_id):
     platform = request.GET["platform"]
     project = Project.objects.filter(id=project_id)
@@ -310,7 +311,7 @@ def download_translation(request, project_id, language_id):
     wrapper = FileWrapper(file(temp.name))
     response = HttpResponse(wrapper, content_type='application/force-download')
     response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(temp.name)
-    response['Content-Length'] = os.path.getsize(filename)
+    response['Content-Length'] = os.path.getsize(temp.name)
     return response
 
 
