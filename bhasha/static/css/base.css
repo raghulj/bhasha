@@ -49,3 +49,8 @@ body {
 code {
   font-size: 80%;
 }
+
+.img-rounded:hover {
+    -moz-box-shadow:     0 0 3px #000000;
+   -webkit-box-shadow:  0 0 3px #000000;
+}

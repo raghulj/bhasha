@@ -3,6 +3,7 @@
 
 {% block content %}
 
+
 <h1> {{ project.title }} </h1>
 
 <hr>
@@ -31,8 +32,9 @@ Total input strings are {{ catalogue|length }}
 				</div>
 
 				<br><br><br>
-				<p> <a href="/projects/{{project.id }}/languages/{{language.id }}/download/?platform=android">strings.xml</a>  </p>
-				<p> <a href="/projects/{{project.id }}/languages/{{language.id }}/download/?platform=ios">Localizable.strings</a>  </p>
+
+				<p> <a href="/projects/{{project.id }}/languages/{{language.id }}/download/?platform=android"><img src="/static/img/android_icon.png" class="img-rounded" /></a> 
+				 <a href="/projects/{{project.id }}/languages/{{language.id }}/download/?platform=ios"><img src="/static/img/ios_icon.png" class="img-rounded" /></a>  </p>
 
 			</div>
 		</div>
