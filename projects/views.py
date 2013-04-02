@@ -319,7 +319,11 @@ def generate_android_strings_xml(translations_list):
     xml_strings += "<resources>\n"
     for translation in translations_list:
         value = translation.msg_string.replace("&", "&amp;")
-        xml_strings += '\t<string name="' + translation.catalogue.msg_key + '">' + value + '</string>\n'
+        if value.count('%') > 1:
+            xml_strings += '\t<string name="' + translation.catalogue.msg_key + '" formatted="false">' + value + '</string>\n'
+        else:
+            xml_strings += '\t<string name="' + translation.catalogue.msg_key + '">' + value + '</string>\n'
+
     xml_strings += "</resources>"
     return xml_strings
 
