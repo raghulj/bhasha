@@ -294,19 +294,22 @@ def download_translation(request, project_id, language_id):
     project = Project.objects.filter(id=project_id)
     language = Language.objects.filter(id=language_id)
     translations = Translation.objects.filter(project=project).filter(language=language)
+    temp = file("/tmp/strings.xml", "w")
 
     if platform == "android":
+        temp = file("/tmp/strings.xml", "w")
         strings = generate_android_strings_xml(translations)
+    elif platform == "ios":
+        temp = file("/tmp/Localizable.strings", "w")
+        strings = generate_ios_strings(translations)
     else:
         strings = "empty"
 
-    temp = file("/tmp/strings.xml", "w")
     temp.write(strings.encode('utf-8'))
     temp.close()
-    filename = "/tmp/strings.xml"  # Select your file here.
-    wrapper = FileWrapper(file(filename))
+    wrapper = FileWrapper(file(temp.name))
     response = HttpResponse(wrapper, content_type='application/force-download')
-    response['Content-Disposition'] = 'attachment; filename=strings.xml'
+    response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(temp.name)
     response['Content-Length'] = os.path.getsize(filename)
     return response
 
@@ -319,6 +322,14 @@ def generate_android_strings_xml(translations_list):
         xml_strings += '\t<string name="' + translation.catalogue.msg_key + '">' + value + '</string>\n'
     xml_strings += "</resources>"
     return xml_strings
+
+
+def generate_ios_strings(translations_list):
+    ios_strings = '/* Localizable.strings */\n'
+    for translation in translations_list:
+        value = translation.msg_string.replace("%s", "%@")
+        ios_strings += '"' + translation.catalogue.msg_key + '" = "' + value + '";\n'
+    return ios_strings
 
 
 ## apple.strings
